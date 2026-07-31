@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#171C23" />
+<title>Horizon — Goal & Roadmap System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  --ink:#171C23; --muted:#5C6672; --faint:#8B95A1; --line:#C9D2DC; --hair:#DEE4EB;
+  --paper:#EAEEF3; --card:#FCFDFE; --grid:#DBE2EA;
+  --gs:'Space Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{color:var(--ink); font-family:var(--body); -webkit-font-smoothing:antialiased;
+  background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/100% 26px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/26px 100%,var(--paper);}
+.wrap{max-width:1000px; margin:0 auto; padding:24px 20px 60px;}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #1D6E93; outline-offset:1px;}
+.ed{font:inherit; color:inherit; background:#F3F7FA; border:1px solid var(--line); border-radius:3px; padding:4px 8px; width:100%;}
+.ed:focus{background:#fff; border-color:#1D6E93; outline:none;}
+.ed-area{resize:vertical; line-height:1.5; min-height:34px;}
+
+/* header */
+.head{display:flex; justify-content:space-between; align-items:stretch; gap:18px; background:var(--card); border:1.5px solid var(--ink); padding:18px 20px; flex-wrap:wrap; box-shadow:6px 6px 0 rgba(23,28,35,.06);}
+.head-main{flex:1; min-width:220px;}
+.eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:var(--muted);}
+.h1{font-family:var(--gs); font-weight:700; font-size:clamp(26px,5vw,40px); letter-spacing:-.02em; margin:6px 0 0; line-height:1;}
+.h1 .ed{font-family:var(--gs); font-weight:700; font-size:inherit;}
+.sub{color:var(--muted); font-size:13px; margin:9px 0 0; max-width:52ch; line-height:1.5;}
+.gauge{position:relative; width:74px; height:74px; flex:none;}
+.gt{fill:none; stroke:var(--hair); stroke-width:6;}
+.gf{fill:none; stroke:#1D6E93; stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1);}
+.gn{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--gs); font-weight:700; font-size:21px;}
+.gn small{font-size:10px; color:var(--muted); font-weight:600;}
+
+/* capture */
+.capture{display:flex; gap:8px; margin-top:14px; background:var(--card); border:1px solid var(--line); padding:12px 14px; align-items:center;}
+.capture svg{flex:none; color:#1D6E93;}
+.cap-in{flex:1; font:inherit; font-size:15px; border:none; background:transparent; padding:6px 4px;}
+.cap-in:focus{outline:none;}
+.cap-in::placeholder{color:var(--faint);}
+.cap-add{font-family:var(--gs); font-weight:600; font-size:13px; padding:8px 16px; background:var(--ink); color:#fff; border-radius:4px;}
+.cap-add:hover{background:#1D6E93;}
+
+/* toolbar */
+.toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px;}
+.search{flex:1; min-width:150px; display:flex; align-items:center; gap:7px; background:var(--card); border:1px solid var(--line); border-radius:4px; padding:6px 10px;}
+.search svg{flex:none; color:var(--faint);}
+.search input{flex:1; border:none; background:transparent; font:inherit; font-size:13px;}
+.search input:focus{outline:none;}
+.chip{font-family:var(--mono); font-size:10.5px; font-weight:600; padding:6px 10px; border:1px solid var(--line); border-radius:14px; color:var(--muted); background:var(--card); white-space:nowrap;}
+.chip.on{background:var(--ink); color:#fff; border-color:var(--ink);}
+.tool{font-family:var(--mono); font-size:10.5px; font-weight:600; padding:6px 10px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:var(--card);}
+.tool:hover{border-color:var(--ink); color:var(--ink);}
+.tool.danger:hover{border-color:#C0392B; color:#C0392B;}
+
+/* readout */
+.readout{display:grid; grid-template-columns:repeat(4,1fr); margin-top:12px; border:1px solid var(--line); background:var(--card);}
+.rcell{padding:11px 14px; border-right:1px solid var(--hair);}
+.rcell:last-child{border-right:none;}
+.rk{display:block; font-family:var(--mono); font-size:9px; letter-spacing:.14em; color:var(--faint); text-transform:uppercase;}
+.rv{display:block; font-family:var(--gs); font-weight:700; font-size:19px; margin-top:3px;}
+.rsub{display:block; font-family:var(--mono); font-size:9.5px; color:var(--muted); margin-top:1px;}
+
+/* timeline */
+.panel{margin-top:18px; background:var(--card); border:1px solid var(--line);}
+.phead{display:flex; align-items:baseline; gap:10px; padding:10px 15px; border-bottom:1px solid var(--hair); cursor:pointer;}
+.plabel{font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.16em;}
+.pnote{font-family:var(--mono); font-size:10px; color:var(--faint);}
+.tl-scroll{overflow-x:auto;} .tl{padding:6px 0 12px;}
+.tl-months{display:flex; padding-left:180px; padding-top:8px;}
+.tl-mon{flex:1; text-align:center; font-family:var(--mono); font-size:9px; color:var(--faint); min-width:24px; padding-bottom:5px;}
+.tl-mon.yr{color:var(--ink); font-weight:600;}
+.tl-mon em{display:block; font-style:normal; font-size:8px; color:var(--muted);}
+.tl-body{position:relative;}
+.tl-ov{position:absolute; top:0; bottom:0; left:180px; right:0; pointer-events:none; z-index:3;}
+.tl-today{position:absolute; top:0; bottom:0; width:1.5px; background:#C0392B;}
+.tl-today em{position:absolute; top:-2px; left:3px; font-style:normal; font-family:var(--mono); font-size:8px; font-weight:600; color:#C0392B;}
+.tl-row{display:flex; align-items:center; height:30px;}
+.tl-lbl{width:180px; flex:none; font-size:11.5px; padding-right:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.tl-track{position:relative; flex:1; height:100%;}
+.tl-bar{position:absolute; top:7px; height:16px; border-radius:2px; overflow:hidden; min-width:3px;}
+.tl-fill{position:absolute; left:0; top:0; bottom:0; opacity:.5;}
+.tl-empty{padding:16px; font-size:12.5px; color:var(--muted); text-align:center;}
+
+/* boards */
+.board{margin-top:16px;}
+.board-head{display:flex; align-items:center; gap:9px; padding:6px 2px; cursor:pointer;}
+.board-bar{width:20px; height:4px; border-radius:2px;}
+.board-name{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.06em;}
+.board-count{font-family:var(--mono); font-size:10px; color:var(--faint);}
+.board-desc{font-family:var(--mono); font-size:10px; color:var(--faint); margin-left:auto;}
+
+/* item */
+.item{background:var(--card); border:1px solid var(--line); margin-top:7px;}
+.item.inbox{background:#F4F6F9;}
+.item.done{background:#F6FAF7;}
+.item-row{display:flex; align-items:center; gap:11px; padding:11px 13px; width:100%; text-align:left;}
+.dot{width:8px; height:8px; border-radius:50%; flex:none;}
+.item-t{flex:1; min-width:0; font-family:var(--gs); font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.item.inbox .item-t{color:#48505B;}
+.typetag{font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.08em; padding:2px 6px; border-radius:3px; background:#EEF2F6; color:var(--muted); flex:none;}
+.hz-chip{font-family:var(--mono); font-size:9.5px; font-weight:600; padding:2px 8px; border-radius:10px; color:#fff; flex:none;}
+.item-count{font-family:var(--mono); font-size:11px; font-weight:600; color:var(--muted); flex:none;}
+.mini{width:46px; height:4px; background:var(--hair); border-radius:3px; overflow:hidden; flex:none;}
+.mini span{display:block; height:100%; border-radius:3px;}
+.chev{flex:none; color:var(--faint); transition:transform .2s;}
+.item.open .chev{transform:rotate(90deg);}
+.activate{display:flex; gap:4px; flex:none;}
+.act-btn{font-family:var(--mono); font-size:9px; font-weight:600; padding:3px 7px; border:1px solid var(--line); border-radius:10px; color:var(--muted); background:#fff;}
+.act-btn:hover{border-color:var(--ink); color:var(--ink);}
+.inbox-badge{font-family:var(--mono); font-size:8.5px; font-weight:600; letter-spacing:.1em; color:#9198A3; border:1px solid #D8DEE6; border-radius:3px; padding:1px 5px; flex:none;}
+
+/* item detail */
+.detail{border-top:1px solid var(--hair); padding:12px 14px;}
+.drow{display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-bottom:11px;}
+.drow .full{grid-column:1/-1;}
+.dlabel{font-family:var(--mono); font-size:9px; letter-spacing:.13em; color:var(--faint); text-transform:uppercase; display:block; margin-bottom:3px;}
+.hz-set{display:flex; gap:5px; flex-wrap:wrap;}
+.hz-opt{font-family:var(--mono); font-size:9.5px; font-weight:600; padding:4px 9px; border-radius:12px; border:1px solid var(--line); color:var(--muted); background:#fff;}
+.hz-opt.on{color:#fff; border-color:transparent;}
+.ms-head{font-family:var(--mono); font-size:9px; letter-spacing:.13em; color:var(--faint); text-transform:uppercase; margin:4px 0 4px;}
+.ms-row{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--hair);}
+.ms-row:last-of-type{border-bottom:none;}
+.ms-box{width:16px; height:16px; border:1.5px solid var(--line); border-radius:3px; flex:none; display:flex; align-items:center; justify-content:center;}
+.ms-txt{flex:1;}
+.ms-txt.on{text-decoration:line-through; color:var(--muted);}
+.delbtn{width:22px; height:22px; border-radius:3px; color:#B04A3A; flex:none; display:flex; align-items:center; justify-content:center;}
+.delbtn:hover{background:#FBEEEA;}
+.addbtn{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px; font-weight:600; color:#1D6E93; border:1px dashed #9CBBD0; border-radius:3px; padding:6px 11px; background:#F3F8FB; margin-top:6px;}
+.addbtn:hover{background:#E9F2F8;}
+.detail-foot{display:flex; justify-content:flex-end; margin-top:10px; padding-top:9px; border-top:1px dashed var(--hair);}
+.del-item{font-family:var(--mono); font-size:10px; font-weight:600; color:#B04A3A; border:1px solid #E4B8AC; border-radius:3px; padding:5px 10px;}
+.del-item:hover{background:#FBEEEA;}
+
+.foot{display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:12px; border-top:1px solid var(--hair); font-family:var(--mono); font-size:10px; color:var(--faint); flex-wrap:wrap; gap:8px;}
+
+/* cloud sync */
+.sync .phead{align-items:center;}
+.sync-badge{font-family:var(--mono); font-size:8.5px; font-weight:700; letter-spacing:.1em; padding:2px 7px; border-radius:10px; border:1px solid;}
+.sync-badge.on{color:#3F7A5A; border-color:#9FCBB2; background:#EEF6F0;}
+.sync-badge.off{color:#8B6B2A; border-color:#E4C48A; background:#FBF4E9;}
+.sync-badge.err{color:#B04A3A; border-color:#E4B8AC; background:#FBEEEA;}
+.sync-body{padding:14px 15px;}
+.sync-msg{font-size:12.5px; line-height:1.55; color:var(--muted); margin:8px 0 0;}
+.sync-msg code{font-family:var(--mono); font-size:11.5px; background:#EEF2F6; padding:1px 5px; border-radius:3px;}
+.sync-form{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.sync-form .ed{flex:1; min-width:150px;}
+.sync-in{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+.sync-who{font-family:var(--gs); font-weight:600; font-size:14px;}
+.sync-sub{font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:2px;}
+.sync-actions{display:flex; gap:8px;}
+@media(max-width:640px){ .sync-form .ed{min-width:0; width:100%;} .sync-form .cap-add,.sync-form .tool{flex:1;} }
+
+/* welcome / front door */
+.welcome{max-width:720px; margin:8px auto 0;}
+.wc-hero{background:var(--card); border:1.5px solid var(--ink); padding:26px 26px 24px; box-shadow:6px 6px 0 rgba(23,28,35,.06);}
+.wc-title{font-family:var(--gs); font-weight:700; font-size:clamp(40px,9vw,64px); letter-spacing:-.03em; margin:6px 0 0; line-height:.95;}
+.wc-lead{font-size:15.5px; line-height:1.55; color:#333; margin:12px 0 0; max-width:46ch;}
+.wc-steps{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;}
+.wc-step{background:var(--card); border:1px solid var(--line); padding:15px 15px 16px; position:relative;}
+.wc-step-ic{color:#1D6E93;}
+.wc-step-n{font-family:var(--mono); font-size:10px; color:var(--faint); position:absolute; top:14px; right:14px;}
+.wc-step-t{font-family:var(--gs); font-weight:700; font-size:15px; margin:9px 0 5px;}
+.wc-step-d{font-size:12.5px; line-height:1.5; color:var(--muted);}
+.wc-card{background:var(--card); border:1.5px solid var(--ink); margin-top:12px; padding:20px 22px;}
+.wc-card-h{font-family:var(--gs); font-weight:600; font-size:16px; margin-bottom:12px;}
+.wc-form{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.wc-form .ed{flex:1; min-width:150px;}
+.wc-msg{font-size:12.5px; line-height:1.5; color:var(--muted); margin:11px 0 0;}
+.wc-msg b,.wc-note b{font-weight:600; color:#333;}
+.wc-ghost{display:inline-block; margin-top:12px; font-family:var(--mono); font-size:11px; font-weight:600; color:#1D6E93;}
+.wc-ghost:hover{text-decoration:underline;}
+.wc-cta{font-family:var(--gs); font-weight:700; font-size:16px; padding:13px 22px; background:var(--ink); color:#fff; border-radius:5px;}
+.wc-cta:hover{background:#1D6E93;}
+.wc-note{font-size:12.5px; line-height:1.55; color:var(--muted); margin:12px 0 0;}
+.wc-tag{text-align:center; font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; color:var(--faint); margin:16px 0 0;}
+
+/* account chip in the app header */
+.head-right{display:flex; align-items:center; gap:14px;}
+.acct{display:flex; align-items:center; gap:8px;}
+.acct-dot{width:8px; height:8px; border-radius:50%; background:#3F9D6D;}
+.acct-dot.warn{background:#E0A030;} .acct-dot.err{background:#C0392B;} .acct-dot.on{background:#3F9D6D;}
+.acct-email{font-family:var(--mono); font-size:10.5px; color:var(--muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.acct-tag{font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.08em; color:#8B6B2A; border:1px solid #E4C48A; background:#FBF4E9; border-radius:10px; padding:2px 7px;}
+.acct-btn{font-family:var(--mono); font-size:10px; font-weight:600; padding:5px 9px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:#fff;}
+.acct-btn:hover{border-color:var(--ink); color:var(--ink);}
+.acct-btn.primary{border-color:#1D6E93; color:#1D6E93;}
+@media(max-width:640px){ .wc-steps{grid-template-columns:1fr;} .head-right{width:100%; justify-content:space-between;} .acct-email{max-width:120px;} }
+
+@media (max-width:640px){
+  .wrap{padding:16px 12px 50px;}
+  .head{flex-direction:column;}
+  .readout{grid-template-columns:1fr 1fr;}
+  .rcell:nth-child(n+3){border-top:1px solid var(--hair);}
+  .drow{grid-template-columns:1fr;}
+  .item-t{font-size:13.5px;}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+<input type="file" id="file" accept="application/json,.json" style="display:none" />
+
+<!-- Supabase client, loaded from a CDN (no build step). If it can't load, Horizon runs local-only. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* =========================================================================
+   HORIZON — capture-to-roadmap goal system  (single file, no build step)
+   Model:  data.items[]  each with a `horizon`.
+     horizon "inbox" = INACTIVE (dumped, not on the roadmap yet)
+     any other horizon = ACTIVE (scheduled onto a roadmap interval)
+   Loop:   state (data) -> render() paints from it -> events change it -> save -> render
+   ========================================================================= */
+var KEY="horizon-data-v1";
+
+/* ============================================================================
+   CLOUD SYNC SETUP — paste your two Supabase values between the quotes below.
+   Both are SAFE to publish: your data is protected by row-level security in
+   Supabase, not by hiding these. (Never paste the "service_role"/secret key.)
+   Leave them blank and Horizon runs fine local-only. See SUPABASE-SETUP.md.
+   ============================================================================ */
+var SUPABASE_URL      = "";   // e.g. https://abcd1234.supabase.co
+var SUPABASE_ANON_KEY = "";   // the long "anon" / "publishable" key
+var MONTH=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var TODAY=new Date().toISOString().slice(0,10);   // live date
+
+var HORIZONS=[
+  {key:"now",  label:"Now — In progress",  short:"Now",   color:"#2E8B8B", desc:"actively working on"},
+  {key:"6mo",  label:"Next 6 Months",      short:"6 mo",  color:"#1D6E93", desc:"near-term roadmap"},
+  {key:"3yr",  label:"Next 3 Years",       short:"3 yr",  color:"#4C5FA6", desc:"medium-term roadmap"},
+  {key:"later",label:"Later — Someday",    short:"Later", color:"#8A6D2A", desc:"on the radar"},
+  {key:"inbox",label:"Inbox — Unscheduled",short:"Inbox", color:"#8B95A1", desc:"dumped, inactive until you give it a horizon"}
+];
+function hz(k){ for(var i=0;i<HORIZONS.length;i++) if(HORIZONS[i].key===k) return HORIZONS[i]; return HORIZONS[4]; }
+var ACTIVE_HZ=["now","6mo","3yr","later"];
+var TYPES=["Goal","Cert","Project","Business","Skill","Habit"];
+var TYPECOLOR={Goal:"#5C6672",Cert:"#1D6E93",Project:"#4C5FA6",Business:"#9E3B4E",Skill:"#2E8B8B",Habit:"#8A6D2A"};
+
+/* icons */
+var PLUS='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+var SEARCH='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>';
+var CHEV='<svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+var CHECK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+var X='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+/* helpers */
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function shortM(s){ if(!s) return "—"; var p=s.split("-").map(Number); return MONTH[p[1]-1]+" '"+String(p[0]).slice(2); }
+
+/* ---- sample seed (edit or wipe freely) ---- */
+function I(title,type,horizon,ms,start,target){ return {id:uid(),title:title,type:type,horizon:horizon,start:start||"",target:target||"",notes:"",milestones:(ms||[]).map(function(t){return {id:uid(),text:t,done:false};})}; }
+var DEFAULT_DATA={
+  meta:{title:"Horizon", subtitle:"Dump every goal, cert, project, and business below. It stays inactive in the Inbox until you give it a horizon — then it joins your roadmap.", owner:"Rob"},
+  items:[
+    I("Learn web development (build & ship Horizon)","Skill","now",["Read the tracker manual","Ship Horizon to GitHub Pages","Rebuild one panel in React"]),
+    I("Google AI Essentials","Cert","6mo",["Enroll","Complete modules","Earn certificate"]),
+    I("Lutron RadioRA 3 Qualification","Cert","6mo",["Create myLutron account","RA3 Qualification Training","Pass Exam 761"]),
+    I("FAA Part 107 — Remote Pilot","Cert","6mo",["FAA Tracking Number (IACRA)","Study UAG (20–40 hrs)","Pass exam","Clear TSA check"]),
+    I("Google IT Automation with Python","Cert","6mo",["Enroll on Coursera","Courses 1–3","Courses 4–6 + capstone","Certificate"]),
+    I("CompTIA Network+","Cert","3yr",["Study objectives","Practice exams","Pass Network+"]),
+    I("CompTIA Security+","Cert","3yr",["Study objectives","Practice exams","Pass Security+"]),
+    I("Inductive Automation — Ignition Core","Cert","3yr",["Inductive University account","Core learning path","Pass Core exam"]),
+    I("CDL — Class A or B","Cert","3yr",["Confirm class + why","DOT medical","CLP + ELDT","Skills test"]),
+    I("Python Certification (PCEP / PCAP)","Cert","3yr",["Decide PCEP vs PCAP","Register","Pass"]),
+    I("PE Mechanical License (Machine Design)","Cert","3yr",["Confirm eligibility (FE + experience)","Complete review course","Pass PE exam","State licensure"]),
+    I("O&M automation app (Pulsco)","Project","inbox",["Define template","Build generator","Pilot on a real system"]),
+    I("PBITS — barcode inventory system","Project","inbox",[]),
+    I("Sales Portal (Pulsco)","Project","inbox",[]),
+    I("Side business","Business","inbox",[]),
+    I("LLW Mastery Framework","Project","inbox",[])
+  ]
+};
+var BLANK_DATA={ meta:{title:"Horizon", subtitle:"Dump every goal below — it stays inactive until you give it a horizon.", owner:""}, items:[] };
+
+/* ---- state ---- */
+var data=load();
+var open={};           // expanded item ids
+var boardClosed={};    // collapsed boards
+var tlOpen=true;
+var filter="all";
+var search="";
+var focusCap=false;
+var syncOpen=true;
+/* cloud sync state */
+var cloud={ sb:null, user:null, status:"init", last:null, timer:null };
+var authEmail="", authPass="", authMsg="";
+var guest=false, forceWelcome=false;
+
+function load(){ var d; try{ d=JSON.parse(localStorage.getItem(KEY)); }catch(e){ d=null; } if(!d||!d.items) d=clone(DEFAULT_DATA); return normalize(d); }
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){} }
+function save(){ saveLocal(); cloudPushDebounced(); }
+function normalize(d){
+  d.meta=d.meta||{}; d.items=d.items||[];
+  d.items.forEach(function(it){
+    if(!it.id) it.id=uid();
+    if(ACTIVE_HZ.indexOf(it.horizon)<0 && it.horizon!=="inbox") it.horizon="inbox";
+    if(!it.horizon) it.horizon="inbox";
+    if(TYPES.indexOf(it.type)<0) it.type="Goal";
+    it.start=it.start||""; it.target=it.target||""; it.notes=it.notes||"";
+    it.milestones=(it.milestones||[]).map(function(m){ return typeof m==="string"?{id:uid(),text:m,done:false}:(m.id?m:{id:uid(),text:m.text||"",done:!!m.done}); });
+  });
+  return d;
+}
+function find(id){ for(var i=0;i<data.items.length;i++) if(data.items[i].id===id) return data.items[i]; return null; }
+function findMs(it,mid){ for(var i=0;i<it.milestones.length;i++) if(it.milestones[i].id===mid) return it.milestones[i]; return null; }
+
+/* ---- derived ---- */
+function done(it){ return it.milestones.filter(function(m){return m.done;}).length; }
+function isDone(it){ return it.milestones.length>0 && done(it)>=it.milestones.length; }
+function totals(){
+  var tMs=0,dMs=0,active=0,inbox=0;
+  data.items.forEach(function(it){ tMs+=it.milestones.length; dMs+=done(it); if(it.horizon==="inbox") inbox++; else active++; });
+  return { items:data.items.length, active:active, inbox:inbox, pct: tMs?Math.round(dMs/tMs*100):0, dMs:dMs, tMs:tMs };
+}
+function matches(it){
+  if(filter!=="all" && it.type!==filter) return false;
+  if(search){ var q=search.toLowerCase(); if((it.title+" "+it.notes+" "+it.type).toLowerCase().indexOf(q)<0) return false; }
+  return true;
+}
+
+/* ---- render ---- */
+function gauge(pct){ var r=29,c=2*Math.PI*r,off=c-pct/100*c;
+  return '<div class="gauge"><svg viewBox="0 0 74 74" width="74" height="74"><circle cx="37" cy="37" r="'+r+'" class="gt"/><circle cx="37" cy="37" r="'+r+'" class="gf" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 37 37)"/></svg><div class="gn">'+pct+'<small>%</small></div></div>'; }
+
+function header(){
+  var t=totals();
+  return '<header class="head"><div class="head-main">'+
+    '<div class="eyebrow">GOAL &amp; ROADMAP SYSTEM</div>'+
+    '<div class="h1"><input class="ed" data-edit="meta:title" value="'+esc(data.meta.title)+'" style="max-width:320px"></div>'+
+    '<textarea class="ed ed-area sub" data-edit="meta:subtitle" rows="2" style="margin-top:10px">'+esc(data.meta.subtitle)+'</textarea>'+
+    '</div><div class="head-right">'+accountChip()+gauge(t.pct)+'</div></header>';
+}
+function captureBar(){
+  return '<div class="capture">'+PLUS.replace('width="15" height="15"','width="18" height="18"')+
+    '<input class="cap-in" id="cap" placeholder="Dump a goal, cert, project, or business… (press Enter)" value="">'+
+    '<button class="cap-add" data-act="add">Add to Inbox</button></div>';
+}
+function toolbar(){
+  var chips='<button class="chip'+(filter==="all"?" on":"")+'" data-act="filter" data-f="all">All</button>'+
+    TYPES.map(function(t){ return '<button class="chip'+(filter===t?" on":"")+'" data-act="filter" data-f="'+t+'">'+t+'</button>'; }).join("");
+  return '<div class="toolbar"><div class="search">'+SEARCH+'<input id="search" placeholder="Search…" value="'+esc(search)+'"></div>'+chips+'</div>'+
+    '<div class="toolbar" style="margin-top:8px">'+
+    '<button class="tool" data-act="export">\u2193 Export</button><button class="tool" data-act="import">\u2191 Import</button>'+
+    '<button class="tool" data-act="sample">Sample</button><button class="tool" data-act="blank">Blank</button>'+
+    '<span style="flex:1"></span><span class="pnote">saved in this browser</span></div>';
+}
+function readout(){
+  var t=totals();
+  function c(k,v,s){ return '<div class="rcell"><span class="rk">'+k+'</span><span class="rv">'+v+'</span><span class="rsub">'+s+'</span></div>'; }
+  return '<section class="readout">'+c("Total",t.items,"goals captured")+c("Active",t.active,"on the roadmap")+c("Inbox",t.inbox,"unscheduled")+c("Progress",t.pct+"%",t.dMs+"/"+t.tMs+" steps")+'</section>';
+}
+
+/* timeline: only items that have BOTH start & target dates */
+function computeAxis(dated){
+  var s=dated.map(function(i){return i.start;}).sort()[0], e=dated.map(function(i){return i.target;}).sort().slice(-1)[0];
+  var sy=+s.slice(0,4),sm=+s.slice(5,7),ey=+e.slice(0,4),em=+e.slice(5,7);
+  return {sy:sy,sm:sm,months:Math.max((ey-sy)*12+(em-sm)+2,2)};
+}
+function toAxis(d,ax){ var p=d.split("-").map(Number); var mf=(p[0]-ax.sy)*12+(p[1]-ax.sm); var dim=new Date(p[0],p[1],0).getDate(); return mf+(p[2]-1)/dim; }
+function timeline(){
+  var dated=data.items.filter(function(it){ return it.start&&it.target&&matches(it); });
+  var body;
+  if(!dated.length){ body='<div class="tl-empty">No dated goals yet. Open a goal and add a <b>start</b> and <b>target</b> date to plot it here.</div>'; }
+  else {
+    dated.sort(function(a,b){ return a.start<b.start?-1:1; });
+    var ax=computeAxis(dated), months="", i;
+    for(i=0;i<ax.months;i++){ var raw=ax.sm-1+i, m=((raw%12)+12)%12, y=ax.sy+Math.floor(raw/12), yr=(m===0||i===0);
+      months+='<div class="tl-mon'+(yr?" yr":"")+'"><span>'+MONTH[m]+'</span>'+(yr?"<em>'"+String(y).slice(2)+"</em>":"")+'</div>'; }
+    var rows=dated.map(function(it){
+      var s=toAxis(it.start,ax),e=toAxis(it.target,ax),left=s/ax.months*100,w=Math.max((e-s)/ax.months*100,1.5);
+      var col=isDone(it)?"#3F9D6D":hz(it.horizon).color, pct=it.milestones.length?Math.round(done(it)/it.milestones.length*100):0;
+      return '<div class="tl-row"><div class="tl-lbl">'+esc(it.title)+'</div><div class="tl-track"><div class="tl-bar" style="left:'+left+'%;width:'+w+'%;background:'+rgba(col,.18)+';border:1.2px solid '+col+'"><div class="tl-fill" style="width:'+pct+'%;background:'+col+'"></div></div></div></div>';
+    }).join("");
+    var tA=toAxis(TODAY,ax), tl=(tA>=0&&tA<=ax.months)?'<div class="tl-ov"><div class="tl-today" style="left:'+(tA/ax.months*100)+'%"><em>TODAY</em></div></div>':'';
+    var minW=Math.max(180+ax.months*28,640);
+    body='<div class="tl-scroll"><div class="tl" style="min-width:'+minW+'px"><div class="tl-months">'+months+'</div><div class="tl-body">'+tl+rows+'</div></div></div>';
+  }
+  return '<section class="panel"><div class="phead" data-act="toggle-tl"><span class="plabel">TIMELINE</span><span class="pnote">'+(tlOpen?"dated goals \u00b7 tap to hide":"tap to show")+'</span></div>'+(tlOpen?body:'')+'</section>';
+}
+function rgba(h,a){ var n=parseInt(h.slice(1),16); return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")"; }
+
+function boards(){
+  return HORIZONS.map(function(H){
+    var items=data.items.filter(function(it){ return it.horizon===H.key && matches(it); });
+    var closed=!!boardClosed[H.key];
+    var head='<div class="board-head" data-act="toggle-board" data-k="'+H.key+'"><span class="board-bar" style="background:'+H.color+'"></span><span class="board-name" style="color:'+H.color+'">'+H.label+'</span><span class="board-count">'+items.length+'</span><span class="board-desc">'+H.desc+'</span></div>';
+    var body = closed ? "" : (items.length ? items.map(itemCard).join("") : '<div class="item" style="opacity:.6"><div class="item-row"><span class="item-t" style="font-weight:400;color:var(--faint)">'+(H.key==="inbox"?"Nothing dumped here yet — use the box up top.":"Nothing here yet.")+'</span></div></div>');
+    return '<section class="board">'+head+body+'</section>';
+  }).join("");
+}
+
+function itemCard(it){
+  var isInbox=it.horizon==="inbox", dn=done(it), tot=it.milestones.length, pct=tot?Math.round(dn/tot*100):0;
+  var col=isDone(it)?"#3F9D6D":hz(it.horizon).color, isOpen=!!open[it.id];
+  var right;
+  if(isInbox){
+    right='<span class="inbox-badge">INACTIVE</span><span class="activate">'+
+      ACTIVE_HZ.map(function(k){ return '<button class="act-btn" data-act="set-hz" data-id="'+it.id+'" data-h="'+k+'" title="Activate: '+hz(k).label+'">'+hz(k).short+'</button>'; }).join("")+'</span>';
+  } else {
+    right='<span class="hz-chip" style="background:'+hz(it.horizon).color+'">'+hz(it.horizon).short+'</span>'+
+      (tot?'<span class="item-count">'+dn+'/'+tot+'</span><span class="mini"><span style="width:'+pct+'%;background:'+col+'"></span></span>':'');
+  }
+  var row='<div class="item-row" data-act="toggle-item" data-id="'+it.id+'"><span class="dot" style="background:'+(TYPECOLOR[it.type]||"#888")+'"></span>'+
+    '<span class="typetag">'+esc(it.type)+'</span><span class="item-t">'+esc(it.title)+'</span>'+right+'<span style="flex:none">'+CHEV+'</span></div>';
+  var detail = isOpen ? itemDetail(it) : "";
+  return '<article class="item'+(isInbox?" inbox":"")+(isDone(it)?" done":"")+(isOpen?" open":"")+'">'+row+detail+'</article>';
+}
+
+function itemDetail(it){
+  var hzset='<div class="hz-set">'+HORIZONS.map(function(H){ var on=it.horizon===H.key; return '<button class="hz-opt'+(on?" on":"")+'" data-act="set-hz" data-id="'+it.id+'" data-h="'+H.key+'" style="'+(on?"background:"+H.color:"")+'">'+H.short+'</button>'; }).join("")+'</div>';
+  var typesel='<select class="ed" data-edit="i:'+it.id+':type">'+TYPES.map(function(t){ return '<option'+(it.type===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select>';
+  var ms=it.milestones.map(function(m){
+    return '<div class="ms-row"><button class="ms-box" data-act="toggle-ms" data-id="'+it.id+'" data-mid="'+m.id+'" style="'+(m.done?"background:#3F9D6D;border-color:#3F9D6D":"")+'">'+(m.done?CHECK:"")+'</button>'+
+      '<input class="ed ms-txt'+(m.done?" on":"")+'" data-edit="m:'+it.id+':'+m.id+'" value="'+esc(m.text)+'">'+
+      '<button class="delbtn" data-act="del-ms" data-id="'+it.id+'" data-mid="'+m.id+'">'+X+'</button></div>';
+  }).join("");
+  return '<div class="detail">'+
+    '<div class="drow"><div class="full"><span class="dlabel">Title</span><input class="ed" data-edit="i:'+it.id+':title" value="'+esc(it.title)+'"></div>'+
+    '<div><span class="dlabel">Type</span>'+typesel+'</div>'+
+    '<div><span class="dlabel">Horizon (activate / reschedule)</span>'+hzset+'</div>'+
+    '<div><span class="dlabel">Start date (optional)</span><input class="ed" type="date" data-edit="i:'+it.id+':start" data-re="1" value="'+esc(it.start)+'"></div>'+
+    '<div><span class="dlabel">Target date (optional)</span><input class="ed" type="date" data-edit="i:'+it.id+':target" data-re="1" value="'+esc(it.target)+'"></div>'+
+    '<div class="full"><span class="dlabel">Notes</span><textarea class="ed ed-area" data-edit="i:'+it.id+':notes" rows="2" placeholder="Context, links, next action…">'+esc(it.notes)+'</textarea></div></div>'+
+    '<div class="ms-head">MILESTONES</div>'+ms+
+    '<button class="addbtn" data-act="add-ms" data-id="'+it.id+'">'+PLUS+' Add milestone</button>'+
+    '<div class="detail-foot"><button class="del-item" data-act="del-item" data-id="'+it.id+'">Delete this goal</button></div></div>';
+}
+
+function footer(){ return '<footer class="foot"><span>Horizon \u00b7 one file \u00b7 your data lives in this browser \u2014 Export to back up or move devices</span><button class="tool danger" data-act="reset-progress">Uncheck all milestones</button></footer>'; }
+
+function render(){
+  var y=window.scrollY;
+  if(currentScreen()==="welcome"){ document.getElementById("root").innerHTML=welcome(); }
+  else { document.getElementById("root").innerHTML=header()+captureBar()+toolbar()+readout()+timeline()+boards()+footer(); }
+  Array.prototype.forEach.call(document.querySelectorAll(".ed-area"),autosize);
+  if(focusCap){ var c=document.getElementById("cap"); if(c){ c.focus(); } focusCap=false; }
+  window.scrollTo(0,y);
+}
+function autosize(el){ el.style.height="auto"; el.style.height=(el.scrollHeight+2)+"px"; }
+
+/* ---- edit plumbing ---- */
+function setByPath(path,val){
+  var t=path.split(":");
+  if(t[0]==="meta"){ data.meta[t[1]]=val; return; }
+  if(t[0]==="i"){ var it=find(t[1]); if(it) it[t[2]]=val; return; }
+  if(t[0]==="m"){ var it2=find(t[1]); var m=findMs(it2,t[2]); if(m) m.text=val; return; }
+}
+
+/* ---- events ---- */
+var root=document.getElementById("root");
+root.addEventListener("input",function(e){
+  var el=e.target;
+  if(el.id==="auth-email"){ authEmail=el.value; return; }
+  if(el.id==="auth-pass"){ authPass=el.value; return; }
+  if(el.id==="search"){ search=el.value; renderKeepSearch(); return; }
+  if(el.dataset&&el.dataset.edit!=null){ setByPath(el.dataset.edit, el.value); save(); if(el.classList.contains("ed-area")) autosize(el); }
+});
+function renderKeepSearch(){ var pos=document.getElementById("search"); var caret=pos?pos.selectionStart:null; render(); var s=document.getElementById("search"); if(s){ s.focus(); if(caret!=null){ try{ s.setSelectionRange(caret,caret); }catch(e){} } } }
+root.addEventListener("change",function(e){
+  var el=e.target;
+  if(el.dataset&&(el.dataset.re||el.tagName==="SELECT")&&el.dataset.edit!=null){ setByPath(el.dataset.edit, el.value); save(); render(); }
+});
+root.addEventListener("keydown",function(e){
+  if(e.target.id==="cap"&&e.key==="Enter"){ addItem(e.target.value); }
+  if((e.target.id==="auth-pass"||e.target.id==="auth-email")&&e.key==="Enter"){ authSignIn(); }
+});
+root.addEventListener("click",function(e){
+  var el=e.target.closest("[data-act]"); if(!el) return;
+  var a=el.dataset.act, id=el.dataset.id;
+  if(a==="add"){ addItem(document.getElementById("cap").value); return; }
+  if(a==="filter"){ filter=el.dataset.f; render(); return; }
+  if(a==="toggle-tl"){ tlOpen=!tlOpen; render(); return; }
+  if(a==="toggle-board"){ boardClosed[el.dataset.k]=!boardClosed[el.dataset.k]; render(); return; }
+  if(a==="toggle-item"){ open[id]=!open[id]; render(); return; }
+  if(a==="set-hz"){ var it=find(id); if(it){ it.horizon=el.dataset.h; save(); render(); } return; }
+  if(a==="toggle-ms"){ var it2=find(id); var m=findMs(it2,el.dataset.mid); if(m){ m.done=!m.done; save(); render(); } return; }
+  if(a==="add-ms"){ var it3=find(id); if(it3){ it3.milestones.push({id:uid(),text:"New milestone",done:false}); save(); render(); } return; }
+  if(a==="del-ms"){ var it4=find(id); if(it4){ it4.milestones=it4.milestones.filter(function(m){return m.id!==el.dataset.mid;}); save(); render(); } return; }
+  if(a==="del-item"){ if(confirm("Delete this goal?")){ data.items=data.items.filter(function(x){return x.id!==id;}); save(); render(); } return; }
+  if(a==="toggle-sync"){ syncOpen=!syncOpen; render(); return; }
+  if(a==="start-local"){ guest=true; forceWelcome=false; setEntered(); render(); return; }
+  if(a==="go-welcome"){ forceWelcome=true; authMsg=""; render(); return; }
+  if(a==="sign-in"){ authSignIn(); return; }
+  if(a==="sign-up"){ authSignUp(); return; }
+  if(a==="sign-out"){ authSignOut(); return; }
+  if(a==="cloud-pull"){ cloudPull(); return; }
+  if(a==="export"){ exportData(); return; }
+  if(a==="import"){ document.getElementById("file").click(); return; }
+  if(a==="sample"){ if(confirm("Replace everything with the sample set?")){ data=normalize(clone(DEFAULT_DATA)); open={}; save(); render(); } return; }
+  if(a==="blank"){ if(confirm("Start empty? Export first if you want a backup.")){ data=normalize(clone(BLANK_DATA)); open={}; save(); render(); } return; }
+  if(a==="reset-progress"){ if(confirm("Uncheck every milestone across all goals?")){ data.items.forEach(function(it){ it.milestones.forEach(function(m){m.done=false;}); }); save(); render(); } return; }
+});
+function addItem(title){ title=(title||"").trim(); if(!title) return; data.items.unshift({id:uid(),title:title,type:"Goal",horizon:"inbox",start:"",target:"",notes:"",milestones:[]}); save(); focusCap=true; render(); }
+
+/* ---- export / import ---- */
+function exportData(){
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=((data.meta.title||"horizon").replace(/[^a-z0-9]+/gi,"-").toLowerCase())+".json";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+document.getElementById("file").addEventListener("change",function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ try{ var d=JSON.parse(r.result); if(d&&d.items){ data=normalize(d); open={}; save(); render(); } else alert("That file doesn't look like a Horizon export."); }catch(err){ alert("Couldn't read that file: "+err.message); } };
+  r.readAsText(f); e.target.value="";
+});
+
+/* ===================== CLOUD SYNC (Supabase) ===================== */
+function syncConfigured(){ return !!(SUPABASE_URL && SUPABASE_ANON_KEY); }
+function signedIn(){ return !!(cloud.sb && cloud.user); }
+function timeAgo(d){ var s=Math.round((Date.now()-d.getTime())/1000); if(s<60) return s+"s ago"; if(s<3600) return Math.round(s/60)+"m ago"; return Math.round(s/3600)+"h ago"; }
+
+function initSync(){
+  if(!syncConfigured()){ cloud.status="unconfigured"; render(); return; }
+  if(typeof supabase==="undefined" || !supabase.createClient){ cloud.status="nolib"; render(); return; }
+  try{ cloud.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  catch(e){ cloud.status="nolib"; render(); return; }
+  cloud.sb.auth.getSession().then(function(res){
+    var sess = res && res.data ? res.data.session : null;
+    if(sess && sess.user){ cloud.user=sess.user; cloudPull(); }
+    else { cloud.status="signedout"; render(); }
+  });
+  cloud.sb.auth.onAuthStateChange(function(_e, sess){
+    cloud.user = (sess && sess.user) ? sess.user : null;
+    if(!cloud.user && cloud.status!=="signedout"){ cloud.status="signedout"; render(); }
+  });
+}
+function cloudPushDebounced(){ if(!signedIn()) return; cloud.status="syncing"; clearTimeout(cloud.timer); cloud.timer=setTimeout(cloudPush,1200); }
+function cloudPush(){
+  if(!signedIn()) return;
+  cloud.sb.from("roadmaps").upsert({ id:cloud.user.id, data:data, updated_at:new Date().toISOString() }).then(function(res){
+    if(res.error){ cloud.status="error"; console.error("Horizon sync push:", res.error); }
+    else { cloud.last=new Date(); cloud.status="synced"; }
+    render();
+  });
+}
+function cloudPull(){
+  if(!signedIn()) return;
+  cloud.status="syncing"; render();
+  cloud.sb.from("roadmaps").select("data").eq("id",cloud.user.id).maybeSingle().then(function(res){
+    if(res.error){ cloud.status="error"; console.error("Horizon sync pull:", res.error); render(); return; }
+    if(res.data && res.data.data){ data=normalize(res.data.data); saveLocal(); open={}; cloud.last=new Date(); cloud.status="synced"; render(); }
+    else { cloudPush(); }   /* nothing in the cloud yet: seed it with what's local */
+  });
+}
+function authSignUp(){
+  authMsg="";
+  if(!authEmail||!authPass){ authMsg="Enter an email and password first."; render(); return; }
+  cloud.sb.auth.signUp({ email:authEmail, password:authPass }).then(function(res){
+    if(res.error){ authMsg=res.error.message; render(); return; }
+    if(res.data && res.data.session){ cloud.user=res.data.session.user; authPass=""; authMsg=""; forceWelcome=false; setEntered(); cloudPull(); }
+    else { authMsg="Account made \u2014 but email confirmation is on. Turn it off in Supabase (Authentication \u2192 Providers \u2192 Email) for instant access, or confirm via email then Sign in."; render(); }
+  });
+}
+function authSignIn(){
+  authMsg="";
+  if(!signedIn() && !syncConfigured()){ return; }
+  if(!authEmail||!authPass){ authMsg="Enter an email and password first."; render(); return; }
+  cloud.sb.auth.signInWithPassword({ email:authEmail, password:authPass }).then(function(res){
+    if(res.error){ authMsg=res.error.message; render(); return; }
+    cloud.user=res.data.session.user; authPass=""; authMsg=""; forceWelcome=false; setEntered(); cloudPull();
+  });
+}
+function authSignOut(){ if(cloud.sb) cloud.sb.auth.signOut(); cloud.user=null; cloud.status="signedout"; authMsg=""; guest=false; forceWelcome=false; render(); }
+
+function syncPanel(){
+  var st=cloud.status, badge, inner;
+  if(st==="unconfigured"){
+    badge='<span class="sync-badge off">LOCAL ONLY</span>';
+    inner='<p class="sync-msg">Cloud sync isn\u2019t set up yet \u2014 your data lives only in this browser. To sync across devices, paste your two Supabase values into the top of <code>index.html</code> and follow <b>SUPABASE-SETUP.md</b>.</p>';
+  } else if(st==="nolib"){
+    badge='<span class="sync-badge off">LOCAL ONLY</span>';
+    inner='<p class="sync-msg">Couldn\u2019t load the Supabase library (you may be offline, or a preview blocked it). Horizon still works locally, and will sync once opened online.</p>';
+  } else if(signedIn()){
+    var status = st==="syncing"?"Syncing\u2026" : st==="error"?"Sync error \u2014 check the browser console" : "Synced";
+    badge='<span class="sync-badge '+(st==="error"?"err":(st==="syncing"?"off":"on"))+'">'+(st==="syncing"?"SYNCING":(st==="error"?"ERROR":"SYNCED"))+'</span>';
+    inner='<div class="sync-in"><div><div class="sync-who">'+esc(cloud.user.email||"signed in")+'</div><div class="sync-sub">'+status+(cloud.last?" \u00b7 last "+timeAgo(cloud.last):"")+'</div></div>'+
+      '<div class="sync-actions"><button class="tool" data-act="cloud-pull">Pull latest</button><button class="tool" data-act="sign-out">Sign out</button></div></div>';
+  } else {
+    badge='<span class="sync-badge off">SIGNED OUT</span>';
+    inner='<div class="sync-form"><input class="ed" id="auth-email" type="email" autocomplete="username" placeholder="email" value="'+esc(authEmail)+'"><input class="ed" id="auth-pass" type="password" autocomplete="current-password" placeholder="password" value="'+esc(authPass)+'"><button class="cap-add" data-act="sign-in">Sign in</button><button class="tool" data-act="sign-up">Create account</button></div>'+
+      '<p class="sync-msg">'+(authMsg?esc(authMsg):"Use the <b>same email &amp; password</b> on every device to sync. First time here? <b>Create account</b>.")+'</p>';
+  }
+  return '<section class="panel sync"><div class="phead" data-act="toggle-sync"><span class="plabel">CLOUD SYNC</span>'+badge+'<span class="pnote" style="margin-left:auto">'+(syncOpen?"tap to hide":"tap to show")+'</span></div>'+(syncOpen?'<div class="sync-body">'+inner+'</div>':'')+'</section>';
+}
+
+/* ---- screens: welcome (front door) vs app ---- */
+function enteredFlag(){ try{ return localStorage.getItem("horizon-entered")==="1"; }catch(e){ return false; } }
+function setEntered(){ try{ localStorage.setItem("horizon-entered","1"); }catch(e){} }
+function currentScreen(){
+  if(signedIn()) return "app";
+  if(forceWelcome) return "welcome";
+  if(guest) return "app";
+  if(syncConfigured()) return "welcome";        // has sync but not signed in -> front door
+  return enteredFlag() ? "app" : "welcome";     // local-only: show welcome once, then go straight in
+}
+function accountChip(){
+  if(signedIn()){
+    var dot=cloud.status==="error"?"err":(cloud.status==="syncing"?"warn":"on");
+    var lbl=cloud.status==="error"?"sync error":(cloud.status==="syncing"?"syncing\u2026":"synced");
+    return '<div class="acct"><span class="acct-dot '+dot+'" title="'+lbl+'"></span><span class="acct-email">'+esc(cloud.user.email||"account")+'</span><button class="acct-btn" data-act="sign-out">Sign out</button></div>';
+  }
+  return '<div class="acct"><span class="acct-tag">Local only</span><button class="acct-btn primary" data-act="go-welcome">'+(syncConfigured()?"Sign in to sync":"Enable sync")+'</button></div>';
+}
+var STEP_ICON={
+  dump:'<path d="M10 26 L18 26 L21 31 L27 31 L30 26 L38 26"/><path d="M10 26 L14 12 L34 12 L38 26 L38 38 L10 38 Z"/><path d="M24 4 L24 9 M18 6 L20 9 M30 6 L28 9" opacity="0.55"/>',
+  horizon:'<circle cx="24" cy="30" r="8"/><path d="M4 30 L44 30"/><path d="M24 22 L24 30 L30 27" opacity="0.7"/>',
+  grow:'<path d="M10 40 L38 40"/><path d="M24 40 L24 22"/><path d="M24 26 C24 18 30 13 37 13 C37 21 31 26 24 26 Z"/><path d="M24 30 C24 24 19 20 12 20 C12 27 18 30 24 30 Z"/>'
+};
+function stepSVG(k){ return '<svg viewBox="0 0 48 48" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+STEP_ICON[k]+'</svg>'; }
+function welcome(){
+  var steps=[
+    {k:"dump",t:"Brain-dump",d:"Empty your head. Every cert, project, business, or half-formed idea goes into one Inbox \u2014 no deadline, no commitment. Just get it down."},
+    {k:"horizon",t:"Give it a horizon",d:"When you\u2019re ready, drop each idea onto Now, 6 Months, 3 Years, or Later. It stays inactive until you schedule it \u2014 that\u2019s the moment it joins your roadmap."},
+    {k:"grow",t:"Grow",d:"Break goals into milestones and check them off. A scattered pile becomes a clear path you can watch fill in."}
+  ].map(function(s,i){ return '<div class="wc-step"><div class="wc-step-ic">'+stepSVG(s.k)+'</div><div class="wc-step-n">0'+(i+1)+'</div><div class="wc-step-t">'+s.t+'</div><div class="wc-step-d">'+s.d+'</div></div>'; }).join("");
+  var auth;
+  if(syncConfigured() && cloud.status!=="nolib"){
+    auth='<div class="wc-card"><div class="wc-card-h">Sign in to sync across your devices</div>'+
+      '<div class="wc-form"><input class="ed" id="auth-email" type="email" autocomplete="username" placeholder="email" value="'+esc(authEmail)+'"><input class="ed" id="auth-pass" type="password" autocomplete="current-password" placeholder="password" value="'+esc(authPass)+'"><button class="cap-add" data-act="sign-in">Sign in</button><button class="tool" data-act="sign-up">Create account</button></div>'+
+      '<p class="wc-msg">'+(authMsg?esc(authMsg):"Use the same email &amp; password on every device. First time here? <b>Create account</b>.")+'</p>'+
+      '<button class="wc-ghost" data-act="start-local">or just start on this device \u2192</button></div>';
+  } else {
+    var note=(cloud.status==="nolib")
+      ? "Couldn\u2019t reach the sync service (you may be offline, or a preview blocked it). Start locally now \u2014 it\u2019ll sync when opened online."
+      : "Your goals save in this browser. Want them on every device? Cloud sync takes about 10 minutes to set up \u2014 see <b>SUPABASE-SETUP.md</b>.";
+    auth='<div class="wc-card"><div class="wc-card-h">Ready when you are</div><button class="wc-cta" data-act="start-local">Start brain-dumping \u2192</button><p class="wc-note">'+note+'</p></div>';
+  }
+  return '<div class="welcome"><div class="wc-hero"><div class="eyebrow">GOAL &amp; ROADMAP SYSTEM</div><h1 class="wc-title">Horizon</h1>'+
+    '<p class="wc-lead">Get everything out of your head \u2014 then turn the pile into a plan you can actually grow into.</p></div>'+
+    '<div class="wc-steps">'+steps+'</div>'+auth+
+    '<p class="wc-tag">Capture freely \u00b7 schedule when ready \u00b7 track your growth</p></div>';
+}
+
+render();
+initSync();
+</script>
+</body>
+</html>
